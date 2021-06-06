@@ -1,0 +1,15 @@
+[package]
+name = "sim-engine"
+version = "0.1.0"
+authors = ["Arpan Dhatt <ary.dhatt@gmail.com>"]
+edition = "2018"
+
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = false
+
+[lib]
+crate-type=["cdylib"]
+
+[dependencies]
+wasm-bindgen = "*"
+rapier3d = { version = "0.9.1", features = ["wasm-bindgen"] }
