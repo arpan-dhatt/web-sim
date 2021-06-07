@@ -1,7 +1,7 @@
 import * as THREE from './three.module.js';
-import {OrbitControls} from './orbit-controls.js';
 import init from './sim-engine/pkg/sim_engine.js';
 import { Drone } from './drone.js';
+import * as UTILS from './utils.js';
 
 let KEYS = {};
 document.addEventListener("keydown", event => {
@@ -16,23 +16,11 @@ document.addEventListener("keyup", event => {
 
 
 init().then(() => {
-	console.log("Started");
-	const scene = new THREE.Scene();
-	const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-	const renderer = new THREE.WebGLRenderer();
-	renderer.shadowMap.enabled = true;
-	renderer.setSize(window.innerWidth, window.innerHeight);
-	const controls = new OrbitControls(camera, renderer.domElement);
-	document.body.appendChild(renderer.domElement);
 
-	const geometry = new THREE.BoxGeometry();
-	const material = new THREE.MeshPhongMaterial({color: 0x00ff00});
-	const cube = new THREE.Mesh(geometry, material);
-	cube.castShadow = true;
-	scene.add(cube);
-	cube.translateZ(20);
+	let { scene, camera, renderer, controls} = UTILS.setup();
 
 	let drone = new Drone(scene, 1, 1, 1, 1);
+	let ground = new UTILS.Ground(scene, -1.1);
 
 	const light = new THREE.PointLight(0xffffff, 1);
 	light.castShadow = true;

@@ -7,10 +7,10 @@ export class Drone {
 		this.max_static_thrust = max_static_thrust;
 		this.max_inflow_vel = max_inflow_vel;
 
-		const body_radius = 0.03;
-		const body_height = 0.02;
-		const arm_radius = 0.008;
-		const arm_length = 0.07;
+		const body_radius = 0.08;
+		const body_height = 0.04;
+		const arm_radius = 0.02;
+		const arm_length = 0.1;
 
 		const body_geo = new THREE.CylinderGeometry(body_radius, body_radius, body_height, 32, 1);
 		const body_mat = new THREE.MeshPhongMaterial({color: 0xb3b3b3});
@@ -59,6 +59,8 @@ export class Drone {
 		group.add(arm_c);
 		group.add(arm_d);
 
-		scene.add(group);
+		this.mesh = group;
+
+		scene.add(this.mesh);
 	}
 }
