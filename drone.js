@@ -1,7 +1,7 @@
 import * as THREE from './three.module.js';
 
 export class Drone {
-	constructor(scene, body_mass, per_arm_mass, max_static_thrust, max_inflow_vel) {
+	constructor(scene, world, body_mass, per_arm_mass, max_static_thrust, max_inflow_vel) {
 		this.body_mass = body_mass;
 		this.per_arm_mass = per_arm_mass;
 		this.max_static_thrust = max_static_thrust;
@@ -9,7 +9,7 @@ export class Drone {
 
 		const body_radius = 0.08;
 		const body_height = 0.04;
-		const arm_radius = 0.02;
+		const arm_radius = 0.018;
 		const arm_length = 0.1;
 
 		const body_geo = new THREE.CylinderGeometry(body_radius, body_radius, body_height, 32, 1);
@@ -60,7 +60,20 @@ export class Drone {
 		group.add(arm_d);
 
 		this.mesh = group;
-
+		let transform = world.build_vehicle("drone");
+		this.update_transform(transform);
+		
 		scene.add(this.mesh);
 	}
+
+	update_transform(transform) {
+		this.mesh.position.x = transform[0];
+		this.mesh.position.y = transform[1];
+		this.mesh.position.z = transform[2];
+		this.mesh.quaternion.x = transform[3];
+		this.mesh.quaternion.y = transform[4];
+		this.mesh.quaternion.z = transform[5];
+		this.mesh.quaternion.w = transform[6];
+	}
+
 }

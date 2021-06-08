@@ -2,11 +2,13 @@ import * as THREE from './three.module.js';
 import {OrbitControls} from './orbit-controls.js';
 
 export class Ground {
-	constructor(scene, y) {
+	constructor(scene, world, y) {
 		const geo = new THREE.BoxGeometry(100, 2, 100);
 		const mat = new THREE.MeshPhongMaterial({color: 0x00ff0f});
 		this.mesh = new THREE.Mesh(geo, mat);
 		this.mesh.translateY(y-1);
+
+		world.build_ground(y);
 
 		scene.add(this.mesh);
 	}
