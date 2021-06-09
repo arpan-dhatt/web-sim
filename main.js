@@ -15,18 +15,18 @@ document.addEventListener("keyup", event => {
 });
 
 function control_data() {
-	let data = 0x000000;
+	let data = new Float32Array(4);
 	if (KEYS["w"] == true) {
-		data |= 1;
+		data[0] = 1.0;
 	}
 	if (KEYS["q"] == true) {
-		data |= 1 << 1;
+		data[1] = 1.0;
 	}
 	if (KEYS["a"] == true) {
-		data |= 1 << 2;
+		data[2] = 1.0;
 	}
 	if (KEYS["s"] == true) {
-		data |= 1 << 3;
+		data[3] = 1.0;
 	}
 	return data;
 }

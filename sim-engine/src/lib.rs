@@ -1,14 +1,10 @@
-use std::f32::consts::PI;
-use std::f32::consts::SQRT_2;
+mod vehicle;
 
 use rapier3d::na::ArrayStorage;
 use rapier3d::na::Const;
 use rapier3d::prelude::*;
+use vehicle::Vehicle;
 use wasm_bindgen::prelude::*;
-
-enum VehicleType {
-    Drone,
-}
 
 #[wasm_bindgen]
 pub struct World {
@@ -24,9 +20,8 @@ pub struct World {
     ccd_solver: CCDSolver,
     physics_hooks: (),
     event_handler: (),
-    vehicle_handle: Option<RigidBodyHandle>,
-    vehicle_type: Option<VehicleType>,
-    pub controls_active: i32,
+    vehicle_handle: Option<Box<dyn Vehicle>>,
+    vehicle_type: Option<vehicle::VehicleType>,
 }
 
 #[wasm_bindgen]
@@ -55,7 +50,6 @@ impl World {
             event_handler: (),
             vehicle_handle: None,
             vehicle_type: None,
-            controls_active: 0,
         }
     }
 
@@ -66,130 +60,22 @@ impl World {
         self.colliders.insert(collider);
     }
 
-    pub fn build_vehicle(&mut self, vehicle: &str) -> Box<[f32]> {
-        let handle = match vehicle {
-            "drone" => self.build_drone(),
-            _ => self.build_drone(),
+    pub fn build_vehicle(&mut self, vehicle_name: &str) -> Box<[f32]> {
+        let mut vehicle = match vehicle_name {
+            "Drone" => vehicle::create_vehicle(vehicle::VehicleType::Drone, false, &[0.0]),
+            _ => vehicle::create_vehicle(vehicle::VehicleType::Drone, false, &[0.0]),
         };
-        self.vehicle_handle = Some(handle);
-        return Box::new(self.bodies[handle].raw_isometry());
+        vehicle.build(&mut self.bodies, &mut self.colliders);
+        self.vehicle_handle = Some(vehicle);
+        return Box::new(self.vehicle_handle.as_ref().unwrap().transform(&self.bodies));
     }
 
-    fn build_drone(&mut self) -> RigidBodyHandle {
-        self.vehicle_type = Some(VehicleType::Drone);
-
-        let body_radius = 0.08_f32;
-        let body_height = 0.04_f32;
-        let arm_radius = 0.02_f32;
-        let arm_length = 0.1_f32;
-
-        let rigid_body = RigidBodyBuilder::new_dynamic().build();
-        let body_collider = ColliderBuilder::cylinder(body_height / 2f32, body_radius).build();
-
-        let arm_builder = || ColliderBuilder::cylinder(arm_length / 2f32, arm_radius).build();
-        let mut arm_a = arm_builder();
-        arm_a.set_translation(vector![
-            (body_radius + arm_length / 2f32) * SQRT_2 / 2f32,
-            0.0,
-            (body_radius + arm_length / 2f32) * SQRT_2 / 2f32
-        ]);
-        arm_a.set_rotation(vector![PI / 2f32, 0.0, -PI / 4.0]);
-
-        let mut arm_b = arm_builder();
-        arm_b.set_translation(vector![
-            -(body_radius + arm_length / 2f32) * SQRT_2 / 2f32,
-            0.0,
-            (body_radius + arm_length / 2f32) * SQRT_2 / 2f32
-        ]);
-        arm_b.set_rotation(vector![PI / 2.0, 0.0, PI / 4.0]);
-
-        let mut arm_c = arm_builder();
-        arm_c.set_translation(vector![
-            -(body_radius + arm_length / 2f32) * SQRT_2 / 2f32,
-            0.0,
-            -(body_radius + arm_length / 2f32) * SQRT_2 / 2f32
-        ]);
-        arm_c.set_rotation(vector![PI / 2.0, 0.0, -PI / 4.0]);
-
-        let mut arm_d = arm_builder();
-        arm_d.set_translation(vector![
-            (body_radius + arm_length / 2f32) * SQRT_2 / 2f32,
-            0.0,
-            -(body_radius + arm_length / 2f32) * SQRT_2 / 2f32
-        ]);
-        arm_d.set_rotation(vector![PI / 2.0, 0.0, PI / 4.0]);
-
-        let handle = self.bodies.insert(rigid_body);
-        self.colliders
-            .insert_with_parent(body_collider, handle, &mut self.bodies);
-        self.colliders
-            .insert_with_parent(arm_a, handle, &mut self.bodies);
-        self.colliders
-            .insert_with_parent(arm_b, handle, &mut self.bodies);
-        self.colliders
-            .insert_with_parent(arm_c, handle, &mut self.bodies);
-        self.colliders
-            .insert_with_parent(arm_d, handle, &mut self.bodies);
-
-        handle
-    }
-
-    pub fn update_controls(&mut self, data: i32) {
-        let body_radius = 0.08_f32;
-        let body_height = 0.04_f32;
-        let arm_radius = 0.02_f32;
-        let arm_length = 0.1_f32;
-        let mag = 0.01;
-
-        if let Some(vehicle_type) = &self.vehicle_type {
-            let body = self.bodies.get_mut(self.vehicle_handle.unwrap()).unwrap();
-            if data & 0b1 == 1 << 0 {
-                // A
-                let point = body.position() * point![
-                    (body_radius + arm_length / 2f32) * SQRT_2 / 2f32,
-                    0.0,
-                    (body_radius + arm_length / 2f32) * SQRT_2 / 2f32
-                ];
-                let force = body.position() * vector![0.0, mag, 0.0];
-                body.apply_force_at_point(force, point, true);
-            }
-            if data & 0b10 == 1 << 1 {
-                // B
-                let point = body.position() * point![
-                    -(body_radius + arm_length / 2f32) * SQRT_2 / 2f32,
-                    0.0,
-                    (body_radius + arm_length / 2f32) * SQRT_2 / 2f32
-                ];
-                let force = body.position() * vector![0.0, mag, 0.0];
-                body.apply_force_at_point(force, point, true);
-
-            }
-            if data & 0b100 == 1 << 2 {
-                // C
-                let point = body.position() * point![
-                    -(body_radius + arm_length / 2f32) * SQRT_2 / 2f32,
-                    0.0,
-                    -(body_radius + arm_length / 2f32) * SQRT_2 / 2f32
-                ];
-                let force = body.position() * vector![0.0, mag, 0.0];
-                body.apply_force_at_point(force, point, true);
-
-            }
-            if data & 0b1000 == 1 << 3 {
-                // D
-                let point = body.position() * point![
-                    (body_radius + arm_length / 2f32) * SQRT_2 / 2f32,
-                    0.0,
-                    -(body_radius + arm_length / 2f32) * SQRT_2 / 2f32
-                ];
-                let force = body.position() * vector![0.0, mag, 0.0];
-                body.apply_force_at_point(force, point, true);
-
-            }
-        }
+    pub fn update_controls(&mut self, data: &[f32]) {
+        self.vehicle_handle.as_mut().unwrap().controls(data);
     }
 
     pub fn step(&mut self) -> Box<[f32]> {
+        self.vehicle_handle.as_mut().unwrap().execute_forces(&mut self.bodies);
         self.physics_pipeline.step(
             &self.gravity,
             &self.integration_parameters,
@@ -203,8 +89,7 @@ impl World {
             &self.physics_hooks,
             &self.event_handler,
         );
-
-        Box::new(self.bodies[self.vehicle_handle.unwrap()].raw_isometry())
+        return Box::new(self.vehicle_handle.as_ref().unwrap().transform(&self.bodies));
     }
 }
 

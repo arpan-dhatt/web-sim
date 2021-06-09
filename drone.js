@@ -60,7 +60,7 @@ export class Drone {
 		group.add(arm_d);
 
 		this.mesh = group;
-		let transform = world.build_vehicle("drone");
+		let transform = world.build_vehicle("Drone");
 		this.update_transform(transform);
 		
 		scene.add(this.mesh);
