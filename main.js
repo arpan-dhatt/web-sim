@@ -14,6 +14,22 @@ document.addEventListener("keyup", event => {
 	console.log(event.key, false);
 });
 
+function control_data() {
+	let data = 0x000000;
+	if (KEYS["w"] == true) {
+		data |= 1;
+	}
+	if (KEYS["q"] == true) {
+		data |= 1 << 1;
+	}
+	if (KEYS["a"] == true) {
+		data |= 1 << 2;
+	}
+	if (KEYS["s"] == true) {
+		data |= 1 << 3;
+	}
+	return data;
+}
 
 init().then(() => {
 
@@ -35,6 +51,8 @@ init().then(() => {
 	function animate() {
 		requestAnimationFrame(animate);
 		controls.update();
+		let data = control_data();
+		world.update_controls(data);
 		let new_transforms = world.step();
 		drone.update_transform(new_transforms);
 		renderer.render(scene, camera);

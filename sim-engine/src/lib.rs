@@ -6,6 +6,10 @@ use rapier3d::na::Const;
 use rapier3d::prelude::*;
 use wasm_bindgen::prelude::*;
 
+enum VehicleType {
+    Drone,
+}
+
 #[wasm_bindgen]
 pub struct World {
     gravity: rapier3d::na::base::Matrix<f32, Const<3>, Const<1>, ArrayStorage<f32, 3, 1>>,
@@ -21,6 +25,7 @@ pub struct World {
     physics_hooks: (),
     event_handler: (),
     vehicle_handle: Option<RigidBodyHandle>,
+    vehicle_type: Option<VehicleType>,
     pub controls_active: i32,
 }
 
@@ -49,6 +54,7 @@ impl World {
             physics_hooks: (),
             event_handler: (),
             vehicle_handle: None,
+            vehicle_type: None,
             controls_active: 0,
         }
     }
@@ -70,6 +76,8 @@ impl World {
     }
 
     fn build_drone(&mut self) -> RigidBodyHandle {
+        self.vehicle_type = Some(VehicleType::Drone);
+
         let body_radius = 0.08_f32;
         let body_height = 0.04_f32;
         let arm_radius = 0.02_f32;
@@ -124,6 +132,61 @@ impl World {
             .insert_with_parent(arm_d, handle, &mut self.bodies);
 
         handle
+    }
+
+    pub fn update_controls(&mut self, data: i32) {
+        let body_radius = 0.08_f32;
+        let body_height = 0.04_f32;
+        let arm_radius = 0.02_f32;
+        let arm_length = 0.1_f32;
+        let mag = 0.01;
+
+        if let Some(vehicle_type) = &self.vehicle_type {
+            let body = self.bodies.get_mut(self.vehicle_handle.unwrap()).unwrap();
+            if data & 0b1 == 1 << 0 {
+                // A
+                let point = body.position() * point![
+                    (body_radius + arm_length / 2f32) * SQRT_2 / 2f32,
+                    0.0,
+                    (body_radius + arm_length / 2f32) * SQRT_2 / 2f32
+                ];
+                let force = body.position() * vector![0.0, mag, 0.0];
+                body.apply_force_at_point(force, point, true);
+            }
+            if data & 0b10 == 1 << 1 {
+                // B
+                let point = body.position() * point![
+                    -(body_radius + arm_length / 2f32) * SQRT_2 / 2f32,
+                    0.0,
+                    (body_radius + arm_length / 2f32) * SQRT_2 / 2f32
+                ];
+                let force = body.position() * vector![0.0, mag, 0.0];
+                body.apply_force_at_point(force, point, true);
+
+            }
+            if data & 0b100 == 1 << 2 {
+                // C
+                let point = body.position() * point![
+                    -(body_radius + arm_length / 2f32) * SQRT_2 / 2f32,
+                    0.0,
+                    -(body_radius + arm_length / 2f32) * SQRT_2 / 2f32
+                ];
+                let force = body.position() * vector![0.0, mag, 0.0];
+                body.apply_force_at_point(force, point, true);
+
+            }
+            if data & 0b1000 == 1 << 3 {
+                // D
+                let point = body.position() * point![
+                    (body_radius + arm_length / 2f32) * SQRT_2 / 2f32,
+                    0.0,
+                    -(body_radius + arm_length / 2f32) * SQRT_2 / 2f32
+                ];
+                let force = body.position() * vector![0.0, mag, 0.0];
+                body.apply_force_at_point(force, point, true);
+
+            }
+        }
     }
 
     pub fn step(&mut self) -> Box<[f32]> {
