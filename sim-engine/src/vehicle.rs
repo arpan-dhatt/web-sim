@@ -19,6 +19,7 @@ pub trait Vehicle {
     fn controls(&mut self, data: &[f32]);
     fn execute_forces(&mut self, bodies: &mut RigidBodySet);
     fn transform(&self, bodies: &RigidBodySet) -> [f32; 7];
+    fn sensor_data(&self, bodies: &RigidBodySet, integration_parameters: &IntegrationParameters, gravity: &Vector<Real>) -> [f32; 6];
 }
 
 pub struct Drone {
@@ -31,6 +32,7 @@ pub struct Drone {
     max_inflow_vel: f32,
     handle: Option<RigidBodyHandle>,
     escs: [f32; 4],
+    linvel: Vector<Real>
 }
 
 enum Propeller {
@@ -53,6 +55,7 @@ impl Drone {
                 max_inflow_vel: data[6],
                 handle: None,
                 escs: [0.0; 4],
+                linvel: vector![0.0, 0.0, 0.0]
             };
         } else {
             return Drone::default();
@@ -77,7 +80,7 @@ impl Drone {
             }
         ];
         let force = body.position() * vector![0.0, esc * self.max_prop_thrust, 0.0];
-        body.apply_force_at_point(force, point, true);
+        body.apply_force_at_point(force, body.position() * point, true);
         let torque = vector![
             0.0,
             match &prop {
@@ -97,11 +100,12 @@ impl Default for Drone {
             body_height: 0.04,
             arm_radius: 0.02,
             arm_length: 0.1,
-            max_prop_thrust: 0.01,
+            max_prop_thrust: 0.005,
             max_prop_torque: 0.0005,
             max_inflow_vel: 40.0,
             handle: None,
             escs: [0.0; 4],
+            linvel: vector![0.0, 0.0, 0.0]
         }
     }
 }
@@ -187,5 +191,20 @@ impl Vehicle for Drone {
             }
         }
         return [0.0; 7];
+    }
+
+    fn sensor_data(&self, bodies: &RigidBodySet, integration_parameters: &IntegrationParameters, gravity: &Vector<Real>) -> [f32; 6] {
+        if let Some(handle) = self.handle {
+            if let Some(body) = bodies.get(handle) {
+                let world_acc = (body.linvel() - self.linvel) / integration_parameters.dt;
+                let local_acc = body.position() * world_acc;
+                let mut out = [0.0; 6];
+                out[0] = local_acc.x;
+                out[1] = local_acc.y - gravity.y;
+                out[2] = local_acc.z;
+                return out;
+            }
+        }
+        return [0.0; 6];
     }
 }

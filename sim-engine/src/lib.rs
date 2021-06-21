@@ -89,7 +89,12 @@ impl World {
             &self.physics_hooks,
             &self.event_handler,
         );
-        return Box::new(self.vehicle_handle.as_ref().unwrap().transform(&self.bodies));
+        let mut out = [0.0; 13];
+        let transform = self.vehicle_handle.as_ref().unwrap().transform(&self.bodies);
+        let sensor_data = self.vehicle_handle.as_ref().unwrap().sensor_data(&self.bodies, &self.integration_parameters, &self.gravity);
+        out[..7].copy_from_slice(&transform);
+        out[7..].copy_from_slice(&sensor_data);
+        return Box::new(out);
     }
 }
 

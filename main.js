@@ -52,6 +52,7 @@ init().then(() => {
 		requestAnimationFrame(animate);
 		controls.update();
 		let data = control_data();
+		//let data = maybe_hover(drone);
 		world.update_controls(data);
 		let new_transforms = world.step();
 		drone.update_transform(new_transforms);
