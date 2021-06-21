@@ -196,11 +196,11 @@ impl Vehicle for Drone {
     fn sensor_data(&self, bodies: &RigidBodySet, integration_parameters: &IntegrationParameters, gravity: &Vector<Real>) -> [f32; 6] {
         if let Some(handle) = self.handle {
             if let Some(body) = bodies.get(handle) {
-                let world_acc = (body.linvel() - self.linvel) / integration_parameters.dt;
+                let world_acc = (body.linvel() - self.linvel) / integration_parameters.dt - gravity;
                 let local_acc = body.position() * world_acc;
                 let mut out = [0.0; 6];
                 out[0] = local_acc.x;
-                out[1] = local_acc.y - gravity.y;
+                out[1] = local_acc.y;
                 out[2] = local_acc.z;
                 return out;
             }
