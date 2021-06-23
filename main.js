@@ -55,6 +55,7 @@ init().then(() => {
 		//let data = maybe_hover(drone);
 		world.update_controls(data);
 		let new_transforms = world.step();
+		//console.log(new_transforms[10],new_transforms[11],new_transforms[12]);
 		drone.update_transform(new_transforms);
 		renderer.render(scene, camera);
 	}

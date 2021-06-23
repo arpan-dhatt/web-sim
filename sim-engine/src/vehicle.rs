@@ -1,6 +1,6 @@
 use std::f32::consts::{PI, SQRT_2};
 
-use rapier3d::prelude::*;
+use rapier3d::{na::Quaternion, prelude::*};
 
 use crate::RawIsometry;
 
@@ -19,7 +19,7 @@ pub trait Vehicle {
     fn controls(&mut self, data: &[f32]);
     fn execute_forces(&mut self, bodies: &mut RigidBodySet);
     fn transform(&self, bodies: &RigidBodySet) -> [f32; 7];
-    fn sensor_data(&self, bodies: &RigidBodySet, integration_parameters: &IntegrationParameters, gravity: &Vector<Real>) -> [f32; 6];
+    fn sensor_data(&mut self, bodies: &RigidBodySet, integration_parameters: &IntegrationParameters, gravity: &Vector<Real>) -> [f32; 6];
 }
 
 pub struct Drone {
@@ -32,7 +32,8 @@ pub struct Drone {
     max_inflow_vel: f32,
     handle: Option<RigidBodyHandle>,
     escs: [f32; 4],
-    linvel: Vector<Real>
+    linvel: Vector<Real>,
+    angvel: Vector<Real>
 }
 
 enum Propeller {
@@ -55,7 +56,8 @@ impl Drone {
                 max_inflow_vel: data[6],
                 handle: None,
                 escs: [0.0; 4],
-                linvel: vector![0.0, 0.0, 0.0]
+                linvel: vector![0.0, 0.0, 0.0],
+                angvel: vector![0.0, 0.0, 0.0]
             };
         } else {
             return Drone::default();
@@ -105,7 +107,8 @@ impl Default for Drone {
             max_inflow_vel: 40.0,
             handle: None,
             escs: [0.0; 4],
-            linvel: vector![0.0, 0.0, 0.0]
+            linvel: vector![0.0, 0.0, 0.0],
+            angvel: vector![0.0, 0.0, 0.0]
         }
     }
 }
@@ -193,15 +196,24 @@ impl Vehicle for Drone {
         return [0.0; 7];
     }
 
-    fn sensor_data(&self, bodies: &RigidBodySet, integration_parameters: &IntegrationParameters, gravity: &Vector<Real>) -> [f32; 6] {
+    fn sensor_data(&mut self, bodies: &RigidBodySet, integration_parameters: &IntegrationParameters, gravity: &Vector<Real>) -> [f32; 6] {
         if let Some(handle) = self.handle {
             if let Some(body) = bodies.get(handle) {
                 let world_acc = (body.linvel() - self.linvel) / integration_parameters.dt - gravity;
                 let local_acc = body.position() * world_acc;
                 let mut out = [0.0; 6];
+
+                let ang_acc = (body.angvel() - self.angvel) / integration_parameters.dt;
+
                 out[0] = local_acc.x;
                 out[1] = local_acc.y;
                 out[2] = local_acc.z;
+                out[3] = ang_acc.x;
+                out[4] = ang_acc.x;
+                out[5] = ang_acc.x;
+
+                self.linvel = body.linvel().clone();
+                self.angvel = body.angvel().clone();
                 return out;
             }
         }
