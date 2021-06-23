@@ -19,7 +19,12 @@ pub trait Vehicle {
     fn controls(&mut self, data: &[f32]);
     fn execute_forces(&mut self, bodies: &mut RigidBodySet);
     fn transform(&self, bodies: &RigidBodySet) -> [f32; 7];
-    fn sensor_data(&mut self, bodies: &RigidBodySet, integration_parameters: &IntegrationParameters, gravity: &Vector<Real>) -> [f32; 6];
+    fn sensor_data(
+        &mut self,
+        bodies: &RigidBodySet,
+        integration_parameters: &IntegrationParameters,
+        gravity: &Vector<Real>,
+    ) -> [f32; 6];
 }
 
 pub struct Drone {
@@ -33,7 +38,7 @@ pub struct Drone {
     handle: Option<RigidBodyHandle>,
     escs: [f32; 4],
     linvel: Vector<Real>,
-    angvel: Vector<Real>
+    angvel: Vector<Real>,
 }
 
 enum Propeller {
@@ -57,7 +62,7 @@ impl Drone {
                 handle: None,
                 escs: [0.0; 4],
                 linvel: vector![0.0, 0.0, 0.0],
-                angvel: vector![0.0, 0.0, 0.0]
+                angvel: vector![0.0, 0.0, 0.0],
             };
         } else {
             return Drone::default();
@@ -108,7 +113,7 @@ impl Default for Drone {
             handle: None,
             escs: [0.0; 4],
             linvel: vector![0.0, 0.0, 0.0],
-            angvel: vector![0.0, 0.0, 0.0]
+            angvel: vector![0.0, 0.0, 0.0],
         }
     }
 }
@@ -196,7 +201,12 @@ impl Vehicle for Drone {
         return [0.0; 7];
     }
 
-    fn sensor_data(&mut self, bodies: &RigidBodySet, integration_parameters: &IntegrationParameters, gravity: &Vector<Real>) -> [f32; 6] {
+    fn sensor_data(
+        &mut self,
+        bodies: &RigidBodySet,
+        integration_parameters: &IntegrationParameters,
+        gravity: &Vector<Real>,
+    ) -> [f32; 6] {
         if let Some(handle) = self.handle {
             if let Some(body) = bodies.get(handle) {
                 let world_acc = (body.linvel() - self.linvel) / integration_parameters.dt - gravity;

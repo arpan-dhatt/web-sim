@@ -67,7 +67,12 @@ impl World {
         };
         vehicle.build(&mut self.bodies, &mut self.colliders);
         self.vehicle_handle = Some(vehicle);
-        return Box::new(self.vehicle_handle.as_ref().unwrap().transform(&self.bodies));
+        return Box::new(
+            self.vehicle_handle
+                .as_ref()
+                .unwrap()
+                .transform(&self.bodies),
+        );
     }
 
     pub fn update_controls(&mut self, data: &[f32]) {
@@ -75,7 +80,10 @@ impl World {
     }
 
     pub fn step(&mut self) -> Box<[f32]> {
-        self.vehicle_handle.as_mut().unwrap().execute_forces(&mut self.bodies);
+        self.vehicle_handle
+            .as_mut()
+            .unwrap()
+            .execute_forces(&mut self.bodies);
         self.physics_pipeline.step(
             &self.gravity,
             &self.integration_parameters,
@@ -90,8 +98,16 @@ impl World {
             &self.event_handler,
         );
         let mut out = [0.0; 13];
-        let transform = self.vehicle_handle.as_ref().unwrap().transform(&self.bodies);
-        let sensor_data = self.vehicle_handle.as_ref().unwrap().sensor_data(&self.bodies, &self.integration_parameters, &self.gravity);
+        let transform = self
+            .vehicle_handle
+            .as_ref()
+            .unwrap()
+            .transform(&self.bodies);
+        let sensor_data = self.vehicle_handle.as_mut().unwrap().sensor_data(
+            &self.bodies,
+            &self.integration_parameters,
+            &self.gravity,
+        );
         out[..7].copy_from_slice(&transform);
         out[7..].copy_from_slice(&sensor_data);
         return Box::new(out);
