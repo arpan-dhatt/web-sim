@@ -213,14 +213,15 @@ impl Vehicle for Drone {
                 let local_acc = body.position() * world_acc;
                 let mut out = [0.0; 6];
 
-                let ang_acc = (body.angvel() - self.angvel) / integration_parameters.dt;
+                let world_ang_acc = (body.angvel() - self.angvel) / integration_parameters.dt;
+                let local_ang_acc = body.rotation().to_rotation_matrix() * world_ang_acc;
 
                 out[0] = local_acc.x;
                 out[1] = local_acc.y;
                 out[2] = local_acc.z;
-                out[3] = ang_acc.x;
-                out[4] = ang_acc.x;
-                out[5] = ang_acc.x;
+                out[3] = local_ang_acc.x;
+                out[4] = local_ang_acc.y;
+                out[5] = local_ang_acc.z;
 
                 self.linvel = body.linvel().clone();
                 self.angvel = body.angvel().clone();
