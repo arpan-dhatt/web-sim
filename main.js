@@ -3,6 +3,15 @@ import init, {World} from './sim-engine/pkg/sim_engine.js';
 import {Drone} from './drone.js';
 import * as UTILS from './utils.js';
 
+fetch('./flight-controllers/test.wasm').then(response =>
+	response.arrayBuffer()
+).then(bytes =>
+	WebAssembly.instantiate(bytes)
+).then(results => {
+	// Do something with the results!
+	console.log(results.instance.exports.test());
+});
+
 let KEYS = {};
 document.addEventListener("keydown", event => {
 	KEYS[event.key] = true

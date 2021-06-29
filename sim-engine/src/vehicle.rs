@@ -107,7 +107,7 @@ impl Default for Drone {
             body_height: 0.04,
             arm_radius: 0.02,
             arm_length: 0.1,
-            max_prop_thrust: 0.005,
+            max_prop_thrust: 0.0075,
             max_prop_torque: 0.0005,
             max_inflow_vel: 40.0,
             handle: None,
