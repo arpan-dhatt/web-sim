@@ -3,13 +3,15 @@ import init, {World} from './sim-engine/pkg/sim_engine.js';
 import {Drone} from './drone.js';
 import * as UTILS from './utils.js';
 
+let flight_controller = null;
+
 fetch('./flight-controllers/test.wasm').then(response =>
 	response.arrayBuffer()
 ).then(bytes =>
 	WebAssembly.instantiate(bytes)
 ).then(results => {
 	// Do something with the results!
-	console.log(results.instance.exports.test());
+	flight_controller = results;
 });
 
 let KEYS = {};
@@ -23,7 +25,7 @@ document.addEventListener("keyup", event => {
 	console.log(event.key, false);
 });
 
-function control_data() {
+function keyboard_control_data() {
 	let data = new Float32Array(4);
 	if (KEYS["w"] == true) {
 		data[0] = 1.0;
@@ -60,14 +62,16 @@ init().then(() => {
 	function animate() {
 		requestAnimationFrame(animate);
 		controls.update();
-		let data = control_data();
-		//let data = maybe_hover(drone);
-		world.update_controls(data);
-		let new_transforms = world.step();
-		if (Math.random() < 0.05) {
-			console.log(new_transforms);
-		}
-		drone.update_transform(new_transforms);
+		let sim_data = world.step();
+		let sensor_data_offset = flight_controller.instance.exports.sensor_data_ptr();
+		let sensor_data = new Float32Array(flight_controller.instance.exports.memory.buffer, sensor_data_offset, 13);
+		sensor_data.set(sim_data.buffer);
+		flight_controller.instance.exports.execute();
+		let esc_data_offset = flight_controller.instance.exports.esc_data_ptr();
+		let esc_data = new Float32Array(flight_controller.instance.exports.memory.buffer, esc_data_offset, 4);
+		//let data = keyboard_control_data();
+		world.update_controls(esc_data);
+		drone.update_transform(sim_data);
 		renderer.render(scene, camera);
 	}
 	animate();

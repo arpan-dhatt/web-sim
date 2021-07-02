@@ -120,9 +120,11 @@ impl Default for Drone {
 
 impl Vehicle for Drone {
     fn build(&mut self, bodies: &mut RigidBodySet, colliders: &mut ColliderSet) -> RigidBodyHandle {
-        let mut rigid_body = RigidBodyBuilder::new_dynamic().build();
-        rigid_body.set_linear_damping(0.95);
-        rigid_body.set_angular_damping(0.95);
+        let mut rigid_body = RigidBodyBuilder::new_dynamic()
+            .translation(vector![0.0, 9.0, 0.0])
+            .build();
+        rigid_body.set_linear_damping(0.5);
+        rigid_body.set_angular_damping(0.5);
         let body_collider =
             ColliderBuilder::cylinder(self.body_height / 2f32, self.body_radius).build();
 
